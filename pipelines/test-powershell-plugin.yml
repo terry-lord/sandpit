@@ -1,0 +1,46 @@
+# SolutionName: The name of the solution.
+# Branch: The name of the Azure DevOps Branch in the Repo for testing
+parameters:
+- name: SolutionName
+  type: string
+
+trigger: none
+
+name: test-powershell-plugin
+
+# first variable group will contain $(ServiceConnectionName) and $(ServiceConnectionUrl) values to the Dynamics environment.
+# Power-Platform-Common is coe standard var group
+# ValidateVariableGroupName - The name of the variable group for the validation environment
+# AgentPool - Set agent pool name, default is Azure Pipelines
+# VMImage - Set image type, default is windows-latest
+variables:
+- group: D365Environment-DevExport
+- group: Power-Platform-Common
+- name: ValidateVariableGroupName
+  value: 'D365Environment-Validation'
+- name: AgentPool
+  value: "Azure Pipelines"
+- name: VMImage
+  value: "windows-latest"
+
+resources:
+  pipelines:
+    - pipeline: D365AutomatePSModule
+      project: Common
+      source: build-publish-psmodule
+  repositories:
+    - repository: PipelineRepo
+      type: github
+      name: dvsa/dvsa-COE-Accelerator-Templates
+      ref: refs/tags/v2.0.1
+      endpoint: GitHub-Test-ALM
+    - repository: PPALMFramework
+      type: github
+      name: dvsa/DVSA-Power-Platform-ALM-Framework
+      ref: feature/tssaz-776_cleanuppatches_plugin
+      endpoint: GitHub-Test-ALM
+
+stages:
+- template: templates/test-powershell-plugin.yml@PPALMFramework
+  parameters:
+    SolutionName: ${{ parameters.SolutionName }}
